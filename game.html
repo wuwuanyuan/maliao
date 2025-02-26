@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mobile Flappy Bird</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            touch-action: none;
+        }
+        #gameCanvas {
+            background: #4EC0CA;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+// 初始化画布
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// 游戏对象
+let bird = { x: 100, y: 300, size: 30, velocity: 0 };
+let gravity = 0.8;
+let jumpForce = -12;
+let pipes = [];
+let score = 0;
+
+// 触控事件
+document.addEventListener('touchstart', () => bird.velocity = jumpForce);
+
+// 游戏循环
+function update() {
+    // 更新鸟的位置
+    bird.velocity += gravity;
+    bird.y += bird.velocity;
+
+    // 生成管道
+    if (frames % 120 === 0) {
+        const gap = 200;
+        const height = 100 + Math.random() * (canvas.height - gap - 200);
+        pipes.push({ x: canvas.width, height, passed: false });
+    }
+
+    // 更新管道
+    pipes.forEach(pipe => {
+        pipe.x -= 3;
+        if (pipe.x + 50 < 0) pipes.shift();
+        if (!pipe.passed && pipe.x < bird.x) {
+            score++;
+            pipe.passed = true;
+        }
+    });
+
+    // 碰撞检测
+    if (bird.y < 0 || bird.y > canvas.height) resetGame();
+    pipes.forEach(pipe => {
+        if (bird.x < pipe.x + 50 && bird.x + 30 > pipe.x && 
+            (bird.y < pipe.height || bird.y > pipe.height + gap)) resetGame();
+    });
+}
+
+function draw() {
+    ctx.fillStyle = '#4EC0CA';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // 绘制鸟
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(bird.x, bird.y, bird.size/2, 0, Math.PI*2);
+    ctx.fill();
+
+    // 绘制管道
+    ctx.fillStyle = '#2ECC71';
+    pipes.forEach(pipe => {
+        ctx.fillRect(pipe.x, 0, 50, pipe.height);
+        ctx.fillRect(pipe.x, pipe.height + 200, 50, canvas.height);
+    });
+
+    // 显示分数
+    ctx.fillStyle = '#FFF';
+    ctx.font = '30px Arial';
+    ctx.fillText(`Score: ${score}`, 20, 40);
+}
+
+function resetGame() {
+    bird.y = canvas.height/2;
+    bird.velocity = 0;
+    pipes = [];
+    score = 0;
+}
+
+let frames = 0;
+function gameLoop() {
+    update();
+    draw();
+    frames++;
+    requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>
